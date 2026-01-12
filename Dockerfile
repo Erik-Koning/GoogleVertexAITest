@@ -4,10 +4,7 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
-    # Default to workstation (service account auth via ADC)
-    # This ensures it uses Vertex AI for Gemini calls
-    ENVIRONMENT=workstation \
-    FAISS_INDEX_PATH=/app/faiss_index
+    ENVIRONMENT=workstation
 
 WORKDIR /app
 
