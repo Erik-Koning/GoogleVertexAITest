@@ -2,17 +2,19 @@
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
 
-# GCP
+# GCP (Gemini only)
 google-genai>=1.0.0
 google-cloud-aiplatform>=1.42.1
-google-cloud-discoveryengine>=0.11.0
-google-cloud-storage>=2.14.0
 
 # LangChain (use newer versions compatible with Pydantic v2)
 langchain>=0.2.0
 langchain-core>=0.2.0
 langchain-google-genai>=1.0.0
 langchain-google-vertexai>=1.0.0
+
+# Local Vector Search
+faiss-cpu>=1.7.4
+langchain-community>=0.2.0
 
 # Charts
 matplotlib>=3.8.0

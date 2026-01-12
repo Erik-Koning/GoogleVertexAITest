@@ -1,5 +1,18 @@
 # Quick reference for Cloud Workstation:
 
+# === INSTALL PIP PACKAGES (no internet on workstation) ===
+
+# On local machine (with internet):
+./scripts/bundle_packages.sh
+# Transfer pip_bundle.zip to workstation
+
+# On workstation:
+unzip pip_bundle.zip
+python -m venv .venv
+source .venv/bin/activate
+pip install --no-index --find-links=pip_bundle -r requirements.txt
+rm -rf pip_bundle  # cleanup
+
 # === TERRAFORM (first time setup) ===
 
 gcloud auth list # Verify service account

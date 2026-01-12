@@ -1,18 +1,18 @@
-"""Base tool class with Vertex AI Search RAG pattern."""
+"""Base tool class with local FAISS RAG pattern."""
 
 from abc import ABC, abstractmethod
 from typing import Optional
 
 from src.config import get_settings
 from src.tools.schemas import ResponseMetadata, Source, ToolResponse
-from src.tools.vertex_search import SearchResult, VertexSearchClient
+from src.tools.local_search import LocalSearchClient, SearchResult
 from src.utils.gemini import generate_content
 
 
 class BaseTool(ABC):
     """
     Base class for all RAG tools.
-    Provides common Vertex AI Search + Gemini RAG functionality.
+    Provides common local FAISS search + Gemini RAG functionality.
     """
 
     # Override in subclasses for topic-specific search
@@ -20,7 +20,7 @@ class BaseTool(ABC):
     system_prompt: str = ""
 
     def __init__(self):
-        self.search_client = VertexSearchClient()
+        self.search_client = LocalSearchClient()
 
     @property
     @abstractmethod
@@ -50,7 +50,7 @@ class BaseTool(ABC):
             filter_applied=self.search_filter if self.search_filter else None,
         )
 
-        # 1. Query Vertex AI Search with topic filter
+        # 1. Query local FAISS index with topic filter
         try:
             search_results = self.search_client.search(
                 query=user_query,

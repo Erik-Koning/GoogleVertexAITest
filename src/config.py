@@ -26,15 +26,10 @@ class Settings(BaseSettings):
     google_api_key: str = ""  # Dev only
     allow_general_knowledge_fallback: bool = True  # Allow Gemini to answer from internal knowledge when no docs found
 
-    # Vertex AI Search
-    vertex_search_data_store_id: str = ""
-    vertex_search_engine_id: str = ""
+    # Local Vector Search (FAISS)
+    faiss_index_path: str = "./faiss_index"
 
-    # GCS
-    gcs_bucket_name: str = ""
-
-    # PDF Sync
-    sync_pdfs_in_dev: bool = False
+    # PDF URLs (for source links in responses)
     pdf_base_url: str = ""
 
     def is_dev(self) -> bool:
@@ -72,14 +67,8 @@ class Settings(BaseSettings):
         if self.is_dev() and not self.google_api_key:
             errors.append("GOOGLE_API_KEY is required for dev environment (use ENVIRONMENT=workstation for service account auth)")
 
-        if not self.vertex_search_data_store_id:
-            errors.append("VERTEX_SEARCH_DATA_STORE_ID is not set")
-
-        if not self.vertex_search_engine_id:
-            errors.append("VERTEX_SEARCH_ENGINE_ID is not set")
-
-        if not self.gcs_bucket_name:
-            errors.append("GCS_BUCKET_NAME is not set")
+        if not self.faiss_index_path:
+            errors.append("FAISS_INDEX_PATH is not set")
 
         return errors
 
