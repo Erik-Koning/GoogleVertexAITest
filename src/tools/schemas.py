@@ -24,6 +24,17 @@ class ToolInput(BaseModel):
     )
 
 
+class ResponseMetadata(BaseModel):
+    """Metadata about the response for debugging/transparency."""
+
+    search_results_count: int = Field(default=0, description="Number of search results found")
+    data_store_empty: bool = Field(default=False, description="Whether the data store returned no results")
+    used_internal_knowledge: bool = Field(default=False, description="Whether Gemini used internal knowledge instead of documents")
+    filter_applied: Optional[str] = Field(default=None, description="Search filter that was applied")
+    filter_fallback: bool = Field(default=False, description="Whether filter failed and fell back to no filter")
+    warning: Optional[str] = Field(default=None, description="Any warnings during processing")
+
+
 class ToolResponse(BaseModel):
     """Unified response schema for all tools."""
 
@@ -33,6 +44,7 @@ class ToolResponse(BaseModel):
         default=None, description="Base64-encoded PNG image"
     )
     sources: list[Source] = Field(default_factory=list, description="Source documents")
+    metadata: Optional[ResponseMetadata] = Field(default=None, description="Response metadata")
 
 
 class ChatRequest(BaseModel):
@@ -48,6 +60,7 @@ class ChatResponse(BaseModel):
     chart_type: Optional[str] = None
     image_base64: Optional[str] = None
     sources: list[Source] = []
+    metadata: Optional[ResponseMetadata] = None
 
 
 class OrchestratorDecision(BaseModel):

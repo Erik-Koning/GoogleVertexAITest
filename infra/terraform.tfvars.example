@@ -1,7 +1,36 @@
 # Copy this file to terraform.tfvars and fill in your values
+# See README.md for variable descriptions
 
-project_id      = "your-gcp-project-id"
-region          = "us-central1"
-environment     = "prod"
-container_image = "gcr.io/your-project-id/fund-rag-agent:latest"
-pdf_base_url    = "https://yoursite.com/funds"
+# Required
+project_id = "your-gcp-project-id"
+
+# Optional - defaults shown
+region           = "us-central1"
+data_store_id    = "fund-knowledge-base"
+engine_id        = "fund-search-engine"
+
+# Cloud Run deployment (set to true for production)
+deploy_cloud_run = false
+build_container  = false
+
+# Only needed if deploy_cloud_run = true and build_container = false
+# container_image = "gcr.io/your-project-id/fund-rag-agent:latest"
+
+# ============================================================
+# Example configurations:
+# ============================================================
+
+# --- Local Development / Cloud Workstation (no Cloud Run) ---
+# project_id       = "my-project"
+# deploy_cloud_run = false
+
+# --- Production with auto-build ---
+# project_id       = "my-project"
+# deploy_cloud_run = true
+# build_container  = true
+
+# --- Production with pre-built image ---
+# project_id       = "my-project"
+# deploy_cloud_run = true
+# build_container  = false
+# container_image  = "gcr.io/my-project/fund-rag-agent:v1.0"

@@ -1,6 +1,6 @@
 output "cloud_run_url" {
   description = "URL of the Cloud Run service"
-  value       = google_cloud_run_v2_service.api.uri
+  value       = var.deploy_cloud_run ? google_cloud_run_v2_service.api[0].uri : "Not deployed (deploy_cloud_run=false)"
 }
 
 output "gcs_bucket_name" {

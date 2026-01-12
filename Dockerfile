@@ -3,7 +3,9 @@ FROM python:3.11-slim
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    # Default to prod (service account auth via ADC)
+    ENVIRONMENT=prod
 
 WORKDIR /app
 
@@ -19,7 +21,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY src/ ./src/
+
+# Copy PDFs if they exist (optional - can be empty)
 COPY pdfs/ ./pdfs/
+
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash appuser && \
+    chown -R appuser:appuser /app
+USER appuser
 
 # Expose port
 EXPOSE 8080

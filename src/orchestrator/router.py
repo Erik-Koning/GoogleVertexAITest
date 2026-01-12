@@ -31,7 +31,7 @@ def get_llm():
     """
     Returns LangChain LLM based on environment.
     - Dev: Uses API key via langchain_google_genai
-    - Prod: Uses Vertex AI via langchain_google_vertexai
+    - Prod/Workstation: Uses Vertex AI via langchain_google_vertexai (service account)
     """
     settings = get_settings()
 
@@ -39,14 +39,15 @@ def get_llm():
         from langchain_google_genai import ChatGoogleGenerativeAI
 
         return ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",  # Use Flash for fast routing
+            model=settings.gemini_model,
             google_api_key=settings.google_api_key,
         )
     else:
+        # Prod and Workstation use service account via ADC
         from langchain_google_vertexai import ChatVertexAI
 
         return ChatVertexAI(
-            model_name="gemini-1.5-flash",  # Use Flash for fast routing
+            model_name=settings.gemini_model,
             project=settings.gcp_project_id,
             location=settings.gcp_region,
         )
@@ -124,4 +125,5 @@ class Orchestrator:
             chart_type=tool_response.chart_type,
             image_base64=tool_response.image_base64,
             sources=tool_response.sources,
+            metadata=tool_response.metadata,
         )

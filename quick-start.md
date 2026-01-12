@@ -53,7 +53,7 @@ SYNC_PDFS_IN_DEV=false  # Set to true when you want to sync PDFs
 PDF_BASE_URL=https://yoursite.com/funds
 
 # Optional
-GEMINI_MODEL=gemini-1.5-pro
+GEMINI_MODEL=gemini-2.5-flash
 ```
 
 ### 1.3 GCP Authentication for Vertex AI Search
@@ -274,7 +274,7 @@ gcloud alpha discovery-engine search \
 | `SYNC_PDFS_IN_DEV` | No | `true` or `false` |
 | `PDF_BASE_URL` | No | `https://example.com/funds` |
 | `GCP_REGION` | No | `us-central1` |
-| `GEMINI_MODEL` | No | `gemini-1.5-pro` |
+| `GEMINI_MODEL` | No | `gemini-2.5-flash` |
 
 ### Useful Commands
 

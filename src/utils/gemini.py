@@ -13,7 +13,7 @@ def get_gemini_client() -> genai.Client:
     """
     Returns configured Gemini client based on environment.
     - Dev: Uses API key
-    - Prod: Uses project_id with ADC (service account)
+    - Prod/Workstation: Uses Vertex AI with ADC (service account)
     """
     settings = get_settings()
 
@@ -21,7 +21,7 @@ def get_gemini_client() -> genai.Client:
         # Local development with API key
         client = genai.Client(api_key=settings.google_api_key)
     else:
-        # Production with project-based auth (ADC)
+        # Prod and Workstation use service account via ADC
         client = genai.Client(
             vertexai=True,
             project=settings.gcp_project_id,

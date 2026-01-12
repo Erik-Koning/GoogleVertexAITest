@@ -1,7 +1,7 @@
 # Vertex AI Search Data Store
 resource "google_discovery_engine_data_store" "fund_docs" {
   location         = var.vertex_search_location
-  data_store_id    = "fund-knowledge-base"
+  data_store_id    = var.data_store_id
   display_name     = "Fund Knowledge Base"
   industry_vertical = "GENERIC"
   content_config   = "CONTENT_REQUIRED"
@@ -17,7 +17,7 @@ resource "google_discovery_engine_data_store" "fund_docs" {
 
 # Vertex AI Search Engine
 resource "google_discovery_engine_search_engine" "fund_search" {
-  engine_id      = "fund-search-engine"
+  engine_id      = var.engine_id
   collection_id  = "default_collection"
   location       = var.vertex_search_location
   display_name   = "Fund Search Engine"

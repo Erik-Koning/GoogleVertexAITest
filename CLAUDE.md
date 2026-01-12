@@ -92,13 +92,13 @@ class MyTool(BaseTool):
 ### Environment Variables
 
 ```bash
-ENVIRONMENT=dev                      # dev | prod
+ENVIRONMENT=dev                      # dev | workstation | prod
 GCP_PROJECT_ID=your-project-id
 GCP_REGION=us-central1
 GCS_BUCKET_NAME=your-bucket
 VERTEX_SEARCH_DATA_STORE_ID=fund-knowledge-base
 VERTEX_SEARCH_ENGINE_ID=fund-search-engine
-GEMINI_MODEL=gemini-1.5-pro
+GEMINI_MODEL=gemini-2.5-flash
 GOOGLE_API_KEY=your-key              # Dev only
 SYNC_PDFS_IN_DEV=false               # Set true to sync locally
 PDF_BASE_URL=https://yoursite.com/funds
@@ -109,9 +109,10 @@ PDF_BASE_URL=https://yoursite.com/funds
 | Environment | Method | Usage |
 |-------------|--------|-------|
 | dev | API Key | Set `GOOGLE_API_KEY` env var |
-| prod | ADC | Service account on Cloud Run |
+| workstation | Service Account (ADC) | Uses workstation's attached service account |
+| prod | Service Account (ADC) | Uses Cloud Run's service account |
 
-Dev uses `langchain_google_genai`, prod uses `langchain_google_vertexai`.
+Dev uses `langchain_google_genai`, workstation/prod use `langchain_google_vertexai`.
 
 ## Infrastructure (Terraform)
 

@@ -1,5 +1,38 @@
-# Cloud Run service
+# Default container image if not specified
+locals {
+  container_image = var.container_image != "" ? var.container_image : "gcr.io/${var.project_id}/fund-rag-agent:latest"
+}
+
+# Build and push container image (only when build_container = true)
+resource "null_resource" "build_container" {
+  count = var.build_container && var.deploy_cloud_run ? 1 : 0
+
+  triggers = {
+    # Rebuild when these files change
+    dockerfile = filemd5("${path.module}/../Dockerfile")
+    # Force rebuild with: terraform apply -replace=null_resource.build_container
+  }
+
+  provisioner "local-exec" {
+    working_dir = "${path.module}/.."
+    command     = <<-EOT
+      echo "Configuring Docker for GCR..."
+      gcloud auth configure-docker --quiet
+
+      echo "Building container image..."
+      docker build -t ${local.container_image} .
+
+      echo "Pushing container image..."
+      docker push ${local.container_image}
+
+      echo "Container build and push complete!"
+    EOT
+  }
+}
+
+# Cloud Run service (only deployed when deploy_cloud_run = true)
 resource "google_cloud_run_v2_service" "api" {
+  count    = var.deploy_cloud_run ? 1 : 0
   name     = "fund-rag-agent"
   location = var.region
 
@@ -7,7 +40,7 @@ resource "google_cloud_run_v2_service" "api" {
     service_account = google_service_account.api.email
 
     containers {
-      image = var.container_image
+      image = local.container_image
 
       ports {
         container_port = 8080
@@ -45,7 +78,7 @@ resource "google_cloud_run_v2_service" "api" {
 
       env {
         name  = "GEMINI_MODEL"
-        value = "gemini-1.5-pro"
+        value = var.gemini_model
       }
 
       env {
@@ -89,6 +122,7 @@ resource "google_cloud_run_v2_service" "api" {
   }
 
   depends_on = [
+    null_resource.build_container,
     google_project_service.apis,
     google_storage_bucket.documents,
     google_discovery_engine_search_engine.fund_search,
@@ -97,8 +131,9 @@ resource "google_cloud_run_v2_service" "api" {
 
 # Allow unauthenticated access (configure as needed)
 resource "google_cloud_run_v2_service_iam_member" "public_access" {
-  location = google_cloud_run_v2_service.api.location
-  name     = google_cloud_run_v2_service.api.name
+  count    = var.deploy_cloud_run ? 1 : 0
+  location = google_cloud_run_v2_service.api[0].location
+  name     = google_cloud_run_v2_service.api[0].name
   role     = "roles/run.invoker"
   member   = "allUsers"
 }

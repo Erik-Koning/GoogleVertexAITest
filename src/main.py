@@ -1,11 +1,12 @@
 """FastAPI application for the Fund RAG Agent."""
 
+import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.config import get_settings
+from src.config import ConfigurationError, get_settings, get_validated_settings
 from src.orchestrator import Orchestrator
 from src.startup import sync_pdfs_on_startup
 from src.tools.schemas import ChatRequest, ChatResponse
@@ -17,6 +18,14 @@ async def lifespan(app: FastAPI):
     """Application lifespan handler for startup/shutdown events."""
     # Startup
     print("Starting Fund RAG Agent...")
+
+    # Validate configuration early with helpful error messages
+    try:
+        get_validated_settings()
+    except ConfigurationError as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)
+
     await sync_pdfs_on_startup()
     print("Fund RAG Agent ready.")
     yield

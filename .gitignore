@@ -173,6 +173,12 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
+# GCP credentials (never commit these!)
+key.json
+*.json.key
+credentials.json
+service-account*.json
+
 # Project specific
 pdfs/*.pdf
 !pdfs/.gitkeep
