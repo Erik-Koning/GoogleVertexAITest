@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 from src.tools.schemas import Source, ToolResponse
-from src.tools.vertex_search import SearchResult
+from src.tools.local_search import SearchResult
 
 
 class TestToolResponse:

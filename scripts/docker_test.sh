@@ -66,7 +66,7 @@ run_container() {
     # Check for .env file
     if [ ! -f ".env" ]; then
         log_error ".env file not found. Create one with required configuration."
-        log_info "Required variables: GCP_PROJECT_ID, GCS_BUCKET_NAME, VERTEX_SEARCH_DATA_STORE_ID, VERTEX_SEARCH_ENGINE_ID"
+        log_info "Required variables: GCP_PROJECT_ID, FAISS_INDEX_PATH"
         exit 1
     fi
 

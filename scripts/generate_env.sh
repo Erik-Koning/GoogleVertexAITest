@@ -24,13 +24,13 @@ fi
 log_info "Reading Terraform outputs..."
 
 # Get values from terraform
-PROJECT_ID=$(terraform output -raw gcs_bucket_name 2>/dev/null | sed 's/-fund-documents$//' || echo "")
-DATA_STORE_ID=$(terraform output -raw vertex_search_data_store_id 2>/dev/null || echo "fund-knowledge-base")
-ENGINE_ID=$(terraform output -raw vertex_search_engine_id 2>/dev/null || echo "fund-search-engine")
-BUCKET_NAME=$(terraform output -raw gcs_bucket_name 2>/dev/null || echo "")
+SERVICE_ACCOUNT=$(terraform output -raw service_account_email 2>/dev/null || echo "")
+
+# Try to get project ID from gcloud
+PROJECT_ID=$(gcloud config get-value project 2>/dev/null || echo "")
 
 if [ -z "$PROJECT_ID" ]; then
-    echo "Error: Could not read terraform outputs. Run 'terraform apply' first."
+    echo "Error: Could not determine project ID. Run 'gcloud config set project YOUR_PROJECT_ID' first."
     exit 1
 fi
 
@@ -45,6 +45,12 @@ fi
 EXISTING_API_KEY=""
 if [ -f "$ENV_FILE" ]; then
     EXISTING_API_KEY=$(grep "^GOOGLE_API_KEY=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 || echo "")
+fi
+
+# Check for existing FAISS path to preserve it
+EXISTING_FAISS_PATH=""
+if [ -f "$ENV_FILE" ]; then
+    EXISTING_FAISS_PATH=$(grep "^FAISS_INDEX_PATH=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2 || echo "")
 fi
 
 # Generate .env
@@ -64,26 +70,19 @@ GCP_REGION=us-central1
 # Gemini API Key (get from https://aistudio.google.com/app/apikey)
 GOOGLE_API_KEY=${EXISTING_API_KEY:-REPLACE_WITH_YOUR_API_KEY}
 
-# Vertex AI Search (from Terraform)
-VERTEX_SEARCH_DATA_STORE_ID=${DATA_STORE_ID}
-VERTEX_SEARCH_ENGINE_ID=${ENGINE_ID}
-
-# GCS Bucket (from Terraform)
-GCS_BUCKET_NAME=${BUCKET_NAME}
+# Local Vector Search (FAISS)
+FAISS_INDEX_PATH=${EXISTING_FAISS_PATH:-./faiss_index}
 
 # Optional settings
 GEMINI_MODEL=gemini-2.5-flash
-SYNC_PDFS_IN_DEV=false
 PDF_BASE_URL=
 EOF
 
 log_info "Generated .env file at $(realpath "$ENV_FILE")"
 echo ""
-echo "Values from Terraform:"
-echo "  PROJECT_ID:    ${PROJECT_ID}"
-echo "  DATA_STORE_ID: ${DATA_STORE_ID}"
-echo "  ENGINE_ID:     ${ENGINE_ID}"
-echo "  BUCKET_NAME:   ${BUCKET_NAME}"
+echo "Values:"
+echo "  PROJECT_ID:      ${PROJECT_ID}"
+echo "  FAISS_INDEX_PATH: ${EXISTING_FAISS_PATH:-./faiss_index}"
 echo ""
 
 if [ "$EXISTING_API_KEY" = "" ] || [ "$EXISTING_API_KEY" = "REPLACE_WITH_YOUR_API_KEY" ]; then
