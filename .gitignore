@@ -106,6 +106,8 @@ ipython_config.py
 # PEP 582; used by e.g. github.com/pypa/pdm
 __pypackages__/
 
+node_modules/
+
 # Celery stuff
 celerybeat-schedule
 celerybeat.pid
