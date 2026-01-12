@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Fund RAG Agent - A RAG-powered assistant for Fund Facts, TFSA, and RRSP information. Built with Python, FastAPI, LangChain, Vertex AI Search, and Gemini.
+Fund RAG Agent - A RAG-powered assistant for Fund Facts, TFSA, and RRSP information. Built with Python, FastAPI, LangChain, FAISS (local vector search), and Gemini.
 
 ## Development Commands
 
@@ -37,25 +37,25 @@ mypy .
 ```
 POST /chat → Orchestrator → Tool (TFSA/RRSP/Fund Facts) → Response
                   ↓               ↓
-           Route + Chart?    Vertex AI Search + Gemini RAG
+           Route + Chart?    FAISS Search + Gemini RAG
                                   ↓
                            Chart Generator (optional)
 ```
 
 ### Core Components
 
-- **`src/main.py`** - FastAPI app with `/chat` endpoint, PDF sync on startup
+- **`src/main.py`** - FastAPI app with `/chat` endpoint, FAISS index validation on startup
 - **`src/orchestrator/router.py`** - LangChain router that determines tool + chart parameters
-- **`src/tools/`** - Specialist tools (TFSATool, RRSPTool, FundFactsTool) with Vertex AI Search RAG
-- **`src/tools/vertex_search.py`** - Vertex AI Search client for document retrieval
+- **`src/tools/`** - Specialist tools (TFSATool, RRSPTool, FundFactsTool) with local FAISS RAG
+- **`src/tools/local_search.py`** - FAISS vector search client for document retrieval
 - **`src/charts/`** - Matplotlib chart generation with Gemini structured output for data extraction
-- **`src/startup/pdf_sync.py`** - Syncs PDFs from `/pdfs` to GCS and triggers Vertex import
+- **`src/startup/pdf_sync.py`** - Validates FAISS index exists on startup
 
 ### Request Flow
 
 1. User sends message to `POST /chat`
 2. Orchestrator routes query to appropriate tool (tfsa/rrsp/fund_facts) and detects chart requests
-3. Tool queries Vertex AI Search with topic-specific filter
+3. Tool queries local FAISS index with topic-specific filter
 4. Tool generates RAG response via Gemini with retrieved context
 5. If `generate_chart=True`, extracts data via Gemini structured output and generates Matplotlib chart
 6. Returns response with reply, sources, and optional base64 chart image
@@ -65,7 +65,7 @@ POST /chat → Orchestrator → Tool (TFSA/RRSP/Fund Facts) → Response
 ### Adding a New Tool
 
 1. Create `src/tools/new_tool.py` extending `BaseTool`
-2. Set `search_filter` for Vertex AI Search (e.g., `"category:new_topic"`)
+2. Set `search_filter` for FAISS metadata filtering (e.g., `"category:new_topic"`)
 3. Set `system_prompt` with domain-specific instructions
 4. Register in `src/tools/__init__.py` and `src/orchestrator/router.py`
 
@@ -81,11 +81,13 @@ class MyTool(BaseTool):
         return "my_tool"
 ```
 
-### Adding PDF Documents
+### FAISS Index
 
-1. Add PDFs to `/pdfs` directory
-2. Add metadata to `src/startup/metadata.py` in `PDF_METADATA` dict
-3. On startup, PDFs auto-sync to GCS and trigger Vertex AI import
+The FAISS index should be pre-built and placed at `FAISS_INDEX_PATH`. The index must contain:
+- `index.faiss` - The vector index file
+- `index.pkl` - Metadata/docstore pickle file
+
+Documents in the index should have metadata including: `title`, `source_url`, `category`, `page`.
 
 ## Configuration
 
@@ -95,12 +97,9 @@ class MyTool(BaseTool):
 ENVIRONMENT=dev                      # dev | workstation | prod
 GCP_PROJECT_ID=your-project-id
 GCP_REGION=us-central1
-GCS_BUCKET_NAME=your-bucket
-VERTEX_SEARCH_DATA_STORE_ID=fund-knowledge-base
-VERTEX_SEARCH_ENGINE_ID=fund-search-engine
+FAISS_INDEX_PATH=./faiss_index       # Path to FAISS index directory
 GEMINI_MODEL=gemini-2.5-flash
 GOOGLE_API_KEY=your-key              # Dev only
-SYNC_PDFS_IN_DEV=false               # Set true to sync locally
 PDF_BASE_URL=https://yoursite.com/funds
 ```
 
@@ -124,16 +123,13 @@ terraform plan
 terraform apply
 ```
 
-Creates: GCS bucket, Vertex AI Search data store + engine, Cloud Run service, IAM roles.
+Creates: Cloud Run service, IAM roles for Gemini access.
 
 ## Deployment
 
 ```bash
 # Full deployment
 ./scripts/deploy.sh
-
-# Just trigger document import
-./scripts/import_docs.sh
 ```
 
 ## Response Schema

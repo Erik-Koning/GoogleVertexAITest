@@ -62,21 +62,6 @@ resource "google_cloud_run_v2_service" "api" {
       }
 
       env {
-        name  = "GCS_BUCKET_NAME"
-        value = google_storage_bucket.documents.name
-      }
-
-      env {
-        name  = "VERTEX_SEARCH_DATA_STORE_ID"
-        value = google_discovery_engine_data_store.fund_docs.data_store_id
-      }
-
-      env {
-        name  = "VERTEX_SEARCH_ENGINE_ID"
-        value = google_discovery_engine_search_engine.fund_search.engine_id
-      }
-
-      env {
         name  = "GEMINI_MODEL"
         value = var.gemini_model
       }
@@ -84,6 +69,11 @@ resource "google_cloud_run_v2_service" "api" {
       env {
         name  = "PDF_BASE_URL"
         value = var.pdf_base_url
+      }
+
+      env {
+        name  = "FAISS_INDEX_PATH"
+        value = var.faiss_index_path
       }
 
       resources {
@@ -124,8 +114,6 @@ resource "google_cloud_run_v2_service" "api" {
   depends_on = [
     null_resource.build_container,
     google_project_service.apis,
-    google_storage_bucket.documents,
-    google_discovery_engine_search_engine.fund_search,
   ]
 }
 

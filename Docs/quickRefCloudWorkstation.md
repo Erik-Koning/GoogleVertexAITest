@@ -4,7 +4,7 @@
 
 # On local machine (with internet):
 ./scripts/bundle_packages.sh
-# Transfer pip_bundle.zip to workstation
+# Transfer pip_bundle.zip AND your faiss_index folder to workstation
 
 # On workstation:
 unzip pip_bundle.zip
@@ -12,6 +12,12 @@ python -m venv .venv
 source .venv/bin/activate
 pip install --no-index --find-links=pip_bundle -r requirements.txt
 rm -rf pip_bundle  # cleanup
+
+# === CONFIGURE FAISS INDEX ===
+
+# Ensure your FAISS index is in the configured path:
+export FAISS_INDEX_PATH=/path/to/your/faiss_index
+# Or set in .env file
 
 # === TERRAFORM (first time setup) ===
 
@@ -25,6 +31,7 @@ cd ..
 
 ./scripts/generate_env.sh
 sed -i 's/ENVIRONMENT=dev/ENVIRONMENT=workstation/' .env
+# Update FAISS_INDEX_PATH in .env to point to your index
 
 # === TEST SERVER ===
 
@@ -36,13 +43,13 @@ uvicorn src.main:app --reload --port 8080
 
 ./scripts/docker_test.sh all
 
-    ┌───────────────────┬──────────────────────────────────────┬────────────────────────┐
+    +-------------------+--------------------------------------+------------------------+
 
-│ Environment │ .env │ terraform.tfvars │
-├───────────────────┼──────────────────────────────────────┼────────────────────────┤
-│ Local Dev │ ENVIRONMENT=dev + GOOGLE_API_KEY │ deploy_cloud_run=false │
-├───────────────────┼──────────────────────────────────────┼────────────────────────┤
-│ Cloud Workstation │ ENVIRONMENT=workstation (no API key) │ deploy_cloud_run=false │
-├───────────────────┼──────────────────────────────────────┼────────────────────────┤
-│ Production │ ENVIRONMENT=prod (no API key) │ deploy_cloud_run=true │
-└───────────────────┴──────────────────────────────────────┴────────────────────────┘
+| Environment | .env | terraform.tfvars |
++-------------------+--------------------------------------+------------------------+
+| Local Dev | ENVIRONMENT=dev + GOOGLE_API_KEY | deploy_cloud_run=false |
++-------------------+--------------------------------------+------------------------+
+| Cloud Workstation | ENVIRONMENT=workstation (no API key) | deploy_cloud_run=false |
++-------------------+--------------------------------------+------------------------+
+| Production | ENVIRONMENT=prod (no API key) | deploy_cloud_run=true |
++-------------------+--------------------------------------+------------------------+

@@ -33,22 +33,10 @@ variable "build_container" {
   default     = false
 }
 
-variable "vertex_search_location" {
-  description = "Location for Vertex AI Search (global or regional)"
+variable "faiss_index_path" {
+  description = "Path to the FAISS index directory"
   type        = string
-  default     = "global"
-}
-
-variable "data_store_id" {
-  description = "Vertex AI Search data store ID"
-  type        = string
-  default     = "fund-knowledge-base"
-}
-
-variable "engine_id" {
-  description = "Vertex AI Search engine ID"
-  type        = string
-  default     = "fund-search-engine"
+  default     = "./faiss_index"
 }
 
 variable "pdf_base_url" {
