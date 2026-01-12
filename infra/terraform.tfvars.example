@@ -1,0 +1,7 @@
+# Copy this file to terraform.tfvars and fill in your values
+
+project_id      = "your-gcp-project-id"
+region          = "us-central1"
+environment     = "prod"
+container_image = "gcr.io/your-project-id/fund-rag-agent:latest"
+pdf_base_url    = "https://yoursite.com/funds"
