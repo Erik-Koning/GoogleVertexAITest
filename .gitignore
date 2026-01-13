@@ -121,6 +121,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+node_modules/
 
 # Do NOT ignore .env_safeforgit
 # (this file is safe for git and should be tracked)
