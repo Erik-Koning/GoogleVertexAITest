@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 from langchain_community.vectorstores import FAISS
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 from src.config import get_settings
 
@@ -20,53 +21,74 @@ class SearchResult:
     relevance_score: float = 0.0
 
 
+# Cache for loaded FAISS indexes by path
+_vectorstore_cache: dict[str, FAISS] = {}
+
+
+def get_embeddings():
+    """Get embeddings model for FAISS."""
+    settings = get_settings()
+    if settings.is_dev():
+        return GoogleGenerativeAIEmbeddings(
+            model="models/text-embedding-004",
+            google_api_key=settings.google_api_key,
+        )
+    else:
+        from langchain_google_vertexai import VertexAIEmbeddings
+        return VertexAIEmbeddings(
+            model_name="text-embedding-004",
+            project=settings.gcp_project_id,
+            location=settings.gcp_region,
+        )
+
+
 class LocalSearchClient:
     """Client for querying local FAISS vector store."""
 
-    _instance: Optional["LocalSearchClient"] = None
-    _vectorstore: Optional[FAISS] = None
+    def __init__(self, index_path: str):
+        """
+        Initialize search client for a specific FAISS index.
 
-    def __new__(cls):
-        """Singleton pattern to avoid reloading the index."""
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
-    def __init__(self):
-        if LocalSearchClient._vectorstore is None:
-            self._load_index()
+        Args:
+            index_path: Path to the FAISS index directory
+        """
+        self.index_path = index_path
+        self._load_index()
 
     def _load_index(self) -> None:
-        """Load the FAISS index from disk."""
-        settings = get_settings()
-        index_path = Path(settings.faiss_index_path)
+        """Load the FAISS index from disk (with caching)."""
+        global _vectorstore_cache
 
-        if not index_path.exists():
+        if self.index_path in _vectorstore_cache:
+            self._vectorstore = _vectorstore_cache[self.index_path]
+            return
+
+        path = Path(self.index_path)
+
+        if not path.exists():
             raise FileNotFoundError(
-                f"FAISS index not found at: {index_path}\n"
-                "Please ensure the index exists at the configured FAISS_INDEX_PATH."
+                f"FAISS index not found at: {path}\n"
+                "Please ensure the index exists at the configured path."
             )
 
-        # Load FAISS index - embeddings are stored in the index
-        # We use allow_dangerous_deserialization since we control the index creation
-        LocalSearchClient._vectorstore = FAISS.load_local(
-            str(index_path),
-            embeddings=None,  # Not needed for search if stored in index
+        # Load FAISS index with embeddings for similarity search
+        embeddings = get_embeddings()
+        self._vectorstore = FAISS.load_local(
+            str(path),
+            embeddings=embeddings,
             allow_dangerous_deserialization=True,
         )
-        print(f"Loaded FAISS index from: {index_path}")
+        _vectorstore_cache[self.index_path] = self._vectorstore
+        print(f"Loaded FAISS index from: {path}")
 
     @property
     def vectorstore(self) -> FAISS:
         """Get the loaded vectorstore."""
-        if LocalSearchClient._vectorstore is None:
-            self._load_index()
-        return LocalSearchClient._vectorstore
+        return self._vectorstore
 
     def search(
         self,
         query: str,
-        filter_expr: Optional[str] = None,
         page_size: int = 5,
     ) -> list[SearchResult]:
         """
@@ -74,7 +96,6 @@ class LocalSearchClient:
 
         Args:
             query: The search query
-            filter_expr: Optional filter expression (e.g., "category:tfsa")
             page_size: Number of results to return
 
         Returns:
@@ -82,19 +103,10 @@ class LocalSearchClient:
         """
         settings = get_settings()
 
-        # Build filter dict if filter_expr provided
-        filter_dict = None
-        if filter_expr:
-            # Parse filter like "category:tfsa" into {"category": "tfsa"}
-            if ":" in filter_expr:
-                key, value = filter_expr.split(":", 1)
-                filter_dict = {key.strip(): value.strip()}
-
         # Search with similarity scores
         docs_with_scores = self.vectorstore.similarity_search_with_score(
             query,
             k=page_size,
-            filter=filter_dict,
         )
 
         results = []

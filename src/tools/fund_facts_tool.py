@@ -6,8 +6,6 @@ from src.tools.base import BaseTool
 class FundFactsTool(BaseTool):
     """Tool for answering questions about mutual funds from Fund Facts documents."""
 
-    name = "fund_facts"
-    search_filter = "category:fund_facts"
     system_prompt = """You are a mutual fund expert assistant.
 Your role is to answer questions about:
 - Fund performance and historical returns

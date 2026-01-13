@@ -26,8 +26,10 @@ class Settings(BaseSettings):
     google_api_key: str = ""  # Dev only
     allow_general_knowledge_fallback: bool = True  # Allow Gemini to answer from internal knowledge when no docs found
 
-    # Local Vector Search (FAISS)
-    faiss_index_path: str = "./faiss_index"
+    # Local Vector Search (FAISS) - separate indexes per tool
+    faiss_index_fundfacts: str = "./src/faiss_index_fundfacts"
+    faiss_index_rrsp: str = "./src/faiss_index_rrsp"
+    faiss_index_tfsa: str = "./src/faiss_index_tfsa"
 
     # PDF URLs (for source links in responses)
     pdf_base_url: str = ""
@@ -48,6 +50,15 @@ class Settings(BaseSettings):
         """Check if using service account authentication (prod or workstation)."""
         return self.environment in ("prod", "workstation")
 
+    def get_faiss_index_path(self, tool_name: str) -> str:
+        """Get FAISS index path for a specific tool."""
+        paths = {
+            "fund_facts": self.faiss_index_fundfacts,
+            "rrsp": self.faiss_index_rrsp,
+            "tfsa": self.faiss_index_tfsa,
+        }
+        return paths.get(tool_name, self.faiss_index_fundfacts)
+
     def validate_required(self) -> list[str]:
         """
         Validate required settings and return list of missing/invalid configs.
@@ -67,8 +78,9 @@ class Settings(BaseSettings):
         if self.is_dev() and not self.google_api_key:
             errors.append("GOOGLE_API_KEY is required for dev environment (use ENVIRONMENT=workstation for service account auth)")
 
-        if not self.faiss_index_path:
-            errors.append("FAISS_INDEX_PATH is not set")
+        # At least one FAISS index path should be configured
+        if not any([self.faiss_index_fundfacts, self.faiss_index_rrsp, self.faiss_index_tfsa]):
+            errors.append("At least one FAISS index path must be configured")
 
         return errors
 

@@ -6,8 +6,6 @@ from src.tools.base import BaseTool
 class RRSPTool(BaseTool):
     """Tool for answering RRSP-related questions."""
 
-    name = "rrsp"
-    search_filter = "category:rrsp OR category:retirement"
     system_prompt = """You are an RRSP (Registered Retirement Savings Plan) expert assistant.
 Your role is to answer questions about:
 - RRSP contribution limits and deduction limits

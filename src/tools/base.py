@@ -13,20 +13,27 @@ class BaseTool(ABC):
     """
     Base class for all RAG tools.
     Provides common local FAISS search + Gemini RAG functionality.
+    Each tool has its own FAISS index for domain-specific search.
     """
 
-    # Override in subclasses for topic-specific search
-    search_filter: str = ""
+    # Override in subclasses
     system_prompt: str = ""
-
-    def __init__(self):
-        self.search_client = LocalSearchClient()
+    _search_client: Optional[LocalSearchClient] = None
 
     @property
     @abstractmethod
     def name(self) -> str:
-        """Tool name for identification."""
+        """Tool name for identification and index lookup."""
         pass
+
+    @property
+    def search_client(self) -> LocalSearchClient:
+        """Lazy-load the search client for this tool's index."""
+        if self._search_client is None:
+            settings = get_settings()
+            index_path = settings.get_faiss_index_path(self.name)
+            self._search_client = LocalSearchClient(index_path)
+        return self._search_client
 
     def invoke(
         self,
@@ -45,37 +52,32 @@ class BaseTool(ABC):
         Returns:
             ToolResponse with reply, optional chart, and sources
         """
+        settings = get_settings()
+
         # Track metadata for response
         metadata = ResponseMetadata(
-            filter_applied=self.search_filter if self.search_filter else None,
+            filter_applied=f"index:{self.name}",
         )
 
-        # 1. Query local FAISS index with topic filter
+        # 1. Query this tool's FAISS index
         try:
-            search_results = self.search_client.search(
-                query=user_query,
-                filter_expr=self.search_filter if self.search_filter else None,
-            )
+            search_results = self.search_client.search(query=user_query)
+        except FileNotFoundError as e:
+            # Index doesn't exist yet
+            print(f"Warning: FAISS index not found for {self.name}: {e}")
+            search_results = []
+            metadata.warning = f"Index not found for {self.name}"
         except Exception as e:
-            # If filter fails (e.g., empty data store), retry without filter
-            if "filter" in str(e).lower():
-                print(f"Warning: Filter failed, searching without filter: {e}")
-                metadata.filter_fallback = True
-                metadata.warning = f"Filter failed, searched without filter: {str(e)[:100]}"
-                search_results = self.search_client.search(
-                    query=user_query,
-                    filter_expr=None,
-                )
-            else:
-                raise
+            print(f"Warning: Search failed for {self.name}: {e}")
+            search_results = []
+            metadata.warning = f"Search failed: {str(e)[:100]}"
 
         # Update metadata with search results info
-        settings = get_settings()
         metadata.search_results_count = len(search_results)
         metadata.data_store_empty = len(search_results) == 0
 
         # 2. Build context from search results
-        context = self.search_client.build_context(search_results)
+        context = self.search_client.build_context(search_results) if search_results else ""
         sources = self._extract_sources(search_results)
 
         # 3. Generate response with Gemini (RAG or fallback to internal knowledge)

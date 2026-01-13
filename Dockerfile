@@ -4,7 +4,10 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
-    ENVIRONMENT=workstation
+    ENVIRONMENT=workstation \
+    FAISS_INDEX_FUNDFACTS=./src/faiss_index_fundfacts \
+    FAISS_INDEX_RRSP=./src/faiss_index_rrsp \
+    FAISS_INDEX_TFSA=./src/faiss_index_tfsa
 
 WORKDIR /app
 

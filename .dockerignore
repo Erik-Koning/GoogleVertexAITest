@@ -1,25 +1,76 @@
-__pycache__/
+# Git
+.git
+.gitignore
+
+# Node
+node_modules/
+
+# Python
+__pycache__
 *.py[cod]
 *$py.class
-.venv/
-env/
-.env
-.git/
-.gitignore
-.cursor/
-.vscode/
-.claude/
+*.so
+.Python
+.venv
+venv
+ENV
+env
+.eggs
+*.egg-info
+*.egg
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Testing
+.pytest_cache
+.coverage
+htmlcov
+.tox
+.nox
+
+# Build
+dist
+build
+*.manifest
+*.spec
+
+# Terraform
 infra/
-tests/
-scripts/
 *.tfstate*
-*.tfvars
+.terraform
+
+# Credentials (never include in image)
 key.json
-*.json.key
-service-account*.json
-CLAUDE.md
-SETUP.md
-quick-start.md
-pyproject.toml
-Dockerfile
-.dockerignore
+*.pem
+*.key
+credentials.json
+
+# Environment files (passed at runtime)
+.env
+.env.*
+!.env.example
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Scripts (not needed in container)
+scripts/
+
+# Tests (not needed in prod)
+tests/
+
+# Local development
+.mypy_cache
+.ruff_cache
+
+# Misc
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
