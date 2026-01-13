@@ -6,8 +6,6 @@ from src.tools.base import BaseTool
 class TFSATool(BaseTool):
     """Tool for answering TFSA-related questions."""
 
-    name = "tfsa"
-    search_filter = "category:tfsa OR category:tax-free"
     system_prompt = """You are a TFSA (Tax-Free Savings Account) expert assistant.
 Your role is to answer questions about:
 - TFSA contribution limits and room
